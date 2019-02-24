@@ -1,8 +1,7 @@
 import argparse
 import os
-from src import game
-from policy_gradient import PolicyGradient
-import matplotlib.pyplot as plt
+from trainer import game
+from trainer.policy_gradient import PolicyGradient
 import numpy as np
 
 rewards = []
