@@ -12,7 +12,7 @@ gcloud ml-engine jobs submit training $JOB_NAME \
     --job-dir $JOB_DIR \
     --package-path $TRAINER_PACKAGE_PATH \
     --module-name $MAIN_TRAINER_MODULE \
-    --region us-central1 \
+    --region us-west1 \
     --config config.yaml \
     --runtime-version 1.10 \
     -- \
