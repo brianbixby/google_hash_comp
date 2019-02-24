@@ -1,36 +1,10 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    cartpole.py                                        :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: jcruz-y- <marvin@42.fr>                    +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2019/02/22 21:55:13 by jcruz-y-          #+#    #+#              #
-#    Updated: 2019/02/23 11:08:47 by jcruz-y-         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
+import argparse
+import os
 from src import game
-#import gym
 from policy_gradient import PolicyGradient
 import matplotlib.pyplot as plt
 import numpy as np
 
-#env = gym.make('CartPole-v0')
-#env = env.unwrapped
-
-# Policy gradient has high variance, seed for reproducability
-#env.seed(1)
-
-#print("env.action_space", env.action_space)
-#actions = ["right", "down", "up", "toggle"]
-#print("env.observation_space", env.observation_space)
-#print("env.observation_space.high", env.observation_space.high)
-#print("env.observation_space.low", env.observation_space.low)
-
-
-RENDER_ENV = True
-EPISODES = 25
 rewards = []
 RENDER_REWARD_MIN = 10
 
@@ -50,25 +24,23 @@ def preprocess(state_dict):
 	))
 	return state.astype(np.float).ravel()
 
-if __name__ == "__main__":
-
-
-    # Load checkpoint
-    load_path = None #"output/weights/CartPole-v0.ckpt"
-    save_path = None #"output/weights/CartPole-v0-temp.ckpt"
+def main(args):
+    print('main')
+    args_dict = vars(args)
+    print('args: {}'.format(args_dict))
 
     PG = PolicyGradient(
             n_x = X_DIM,
             n_y = 8,
-            learning_rate=0.01,
-            reward_decay=0.95,
-            load_path=load_path,
-            save_path=save_path
+            learning_rate=args.learning_rate,
+            reward_decay=args.reward_decay,
+            output_dir=args.output_dir,
+            max_to_keep=args.max_to_keep,
+            restore=args.restore,
+            save_checkpoint_steps=args.save_checkpoint_steps
             )
 
-    for episode in range(EPISODES):
-
-        #state = env.reset()
+    for episode in range(args.episodes):
         env = game.Game({'max_steps':200})
         episode_reward = 0
         h = 5			
@@ -76,9 +48,8 @@ if __name__ == "__main__":
         pizza_lines = ["TMTMMTT","MMTMTMM", "MTTMTTT", "TMMMTMM", "TTMTTTM", "TMTMTMT"]
         pizza_config = { 'pizza_lines': pizza_lines, 'r': R, 'c': C, 'l': l, 'h': h }
         state = env.init(pizza_config)[0]  #np.zeros(OBSERVATION_DIM) #get only first value of tuple
-
         while True:
-            if RENDER_ENV: 
+            if args.render: 
                 env.render()
             # sample one action with the given probability distribution
             # 1. Choose an action based on observation
@@ -106,7 +77,7 @@ if __name__ == "__main__":
                 discounted_episode_rewards_norm = PG.learn()
 
                 # Render env if we get to rewards minimum
-                if max_reward_so_far > RENDER_REWARD_MIN: #RENDER_ENV = True
+                if max_reward_so_far > RENDER_REWARD_MIN: #args.render = True
                     break
                 h = np.random.randint(1, R * C + 1)
                 l = np.random.randint(1, h // 2 + 1)
@@ -115,4 +86,50 @@ if __name__ == "__main__":
                 pizza_config = { 'pizza_lines': pizza_lines, 'r': R, 'c': C, 'l': l, 'h': h }
             # Save new state
             state = state_
-        PG.plot_cost()
+        # if args.render: 
+        #     PG.plot_cost()
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser('hashcomp trainer')
+    parser.add_argument(
+        '--output-dir',
+        type=str,
+        default='/tmp/hashcomp_output')
+    parser.add_argument(
+        '--job-dir',
+        type=str,
+        default='/tmp/hashcomp_output')
+    parser.add_argument(
+        '--episodes',
+        type=int,
+        default=10000)
+    parser.add_argument(
+        '--learning-rate',
+        type=float,
+        default=0.01)
+    parser.add_argument(
+        '--reward-decay',
+        type=float,
+        default=0.95)
+    parser.add_argument(
+        '--restore',
+        default=False,
+        action='store_true')
+    parser.add_argument(
+        '--save-checkpoint-steps',
+        type=int,
+        default=1)
+    parser.add_argument(
+        '--render',
+        default=True,
+        action='store_true')
+    # parser.add_argument(
+    #     '--laziness',
+    #     type=float,
+    #     default=0.01)
+    args = parser.parse_args()
+
+    # save all checkpoints
+    args.max_to_keep = args.episodes // args.save_checkpoint_steps
+
+    main(args)

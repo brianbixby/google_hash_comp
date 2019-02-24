@@ -1,23 +1,7 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    policy_gradient.py                                 :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: jcruz-y- <marvin@42.fr>                    +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2019/02/22 21:35:16 by jcruz-y-          #+#    #+#              #
-#    Updated: 2019/02/23 11:05:35 by jcruz-y-         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
-"""
-Policy Gradient Reinforcement Learning
-Uses a 3 layer neural network as the policy network
-"""
+import os
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.framework import ops
-#import cartpole
 
 def preprocess(state_dict):
 	state = np.concatenate((
@@ -35,10 +19,12 @@ class PolicyGradient:
         self,
         n_x,
         n_y,
-        learning_rate=0.01,
-        reward_decay=0.95,
-        load_path=None,
-        save_path=None
+        learning_rate,
+        reward_decay,
+        output_dir,
+        max_to_keep,
+        restore,
+        save_checkpoint_steps
     ):
 
         self.n_x = n_x
@@ -46,9 +32,7 @@ class PolicyGradient:
         self.lr = learning_rate
         self.gamma = reward_decay
 
-        self.save_path = './model'
-        if save_path is not None:
-            self.save_path = save_path
+        self.output_dir = output_dir
 
         self.episode_observations, self.episode_actions, self.episode_rewards = [], [], []
 
@@ -60,17 +44,25 @@ class PolicyGradient:
 
         # $ tensorboard --logdir=logs
         # http://0.0.0.0:6006/
-        self.writer = tf.summary.FileWriter("logs/", self.sess.graph)
-
-        self.sess.run(tf.global_variables_initializer())
+        summary_path = os.path.join(self.output_dir, 'summary')
+        self.writer = tf.summary.FileWriter(summary_path, self.sess.graph)
+        self.save_checkpoint_steps = save_checkpoint_steps
 
         # 'Saver' op to save and restore all the variables
         self.saver = tf.train.Saver()
+        # self.saver = tf.train.Saver(max_to_keep=max_to_keep)
+
+        self.sess.run(tf.global_variables_initializer())
 
         # Restore model
-        if load_path is not None:
-            self.load_path = load_path
-            self.saver.restore(self.sess, self.load_path)
+        if restore:
+            # self.output_dir = output_dir
+            # self.restore_path = tf.train.latest_checkpoint(self.output_dir)
+            # self.output_dir = output_dir
+            # self.saver.restore(self.sess, self.output_dir)
+            restore_path = tf.train.latest_checkpoint(self.output_dir)
+            print('Restoring from {}'.format(restore_path))
+            self.saver.restore(self.sess, restore_path)
 
     def store_transition(self, s, a, r):
         """
@@ -128,9 +120,12 @@ class PolicyGradient:
         self.episode_observations, self.episode_actions, self.episode_rewards  = [], [], []
 
         # Save checkpoint
-        if self.save_path is not None:
-            save_path = self.saver.save(self.sess, self.save_path)
-            print("Model saved in file: %s" % save_path)
+        # print(self.global_step, self.save_checkpoint_steps)
+        # if self.global_step % self.save_checkpoint_steps == 0:
+        #     print('hit\n\n\n')
+        output_dir = os.path.join(self.output_dir, 'model.ckpt')
+        output_dir = self.saver.save(self.sess, output_dir, global_step=self.global_step)
+        print('Model checkpoint saved: {}'.format(output_dir))
 
         return discounted_episode_rewards_norm
 
