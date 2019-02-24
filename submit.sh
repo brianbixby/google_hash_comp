@@ -1,4 +1,4 @@
-BUCKET=$GCS_BUCKET
+BUCKET="gs://hashcomp-bucket/"
 
 TRAINER_PACKAGE_PATH="./trainer"
 MAIN_TRAINER_MODULE="trainer.task"
