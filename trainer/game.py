@@ -138,45 +138,16 @@ class ServePizza:
 
 
 class Game:
-
-    legend = '\n' + \
-        '                                           +---------+\n' + \
-        '  Legend: T M - ingredients  [ ] - cursor  | T  `  M | - slice boundaries\n' + \
-        '                                           +---------+'
-
-    hello = '\n' + \
-        '             _)                                    |    |   _)               \n' + \
-        '       __ \   | _  / _  /   _` |       __|  |   |  __|  __|  |  __ \    _` | \n' + \
-        '       |   |  |   /    /   (   |      (     |   |  |    |    |  |   |  (   | \n' + \
-        '       .__/  _| ___| ___| \__,_|     \___| \__,_| \__| \__| _| _|  _| \__, | \n' + \
-        '      _|                                                              |___/  \n' + \
-        '\n' + \
-        '  |                 |                      _)                    |         |                \n' + \
-        '  __|  |   |   __|  __ \    _ \        __|  |  __ `__ \   |   |  |   _` |  __|   _ \    __| \n' + \
-        '  |    |   |  |     |   |  (   |     \__ \  |  |   |   |  |   |  |  (   |  |    (   |  |    \n' + \
-        ' \__| \__,_| _|    _.__/  \___/      ____/ _| _|  _|  _| \__,_| _| \__,_| \__| \___/  _|    \n' + \
-        '\n' + \
-        '\n' + \
-        '       Welcome to my gameplay where I cut a pizza LIVE for my friends!\n' + \
-        '\n' + \
-        '                   76 69 76 65  6C 61  70 69 7A 7A 61 \n' + \
-        '\n' + \
-        '\n'
-
-    goodbye = '\nBon appetit !'
-
     def __init__(self, args):
         self.max_steps = args.get('max_steps', float('inf'))
         self.env = None
         self.serve_pizza = ServePizza()
-        print("__INIT__")
 
     def init(self, pizza_config):
         self.google_engineer = GoogleEngineer(pizza_config)
         self.unique_ingredients = self.google_engineer.pizza.ingredients._unique.tolist()
 
         self.step_index = 0
-        print("INIT")
         self.env = {
             'state': self.google_engineer.state(),
             'reward': 0,
@@ -229,84 +200,15 @@ class Game:
 
 
     def render(self):
-        print(self.hello)
         self.render_information()
         self.serve_pizza.print_from(self.env)
-        print(self.legend)
 
 
 
 if __name__ == '__main__':
-    pizza_config_line_description = \
-        '1 line containing the following natural numbers separated by single spaces:\n' + \
-        '   - R (1 <= R <= 1000) is the number of rows,\n' + \
-        '   - C (1 <= C <= 1000) is the number of columns,\n' + \
-        '   - L (1 <= L <= 1000) is the minimum number of each ingredient cells in a slice,\n' + \
-        '   - H (1 <= H <= 1000) is the maximum total number of cells of a slice\n'
-
-    pizza_lines_description = \
-        'R lines describing the rows of the pizza (one row after another). Each of\n' + \
-        '   these lines contains C characters describing the ingredients in the cells\n' + \
-        '   of the row (one cell after another). Each character is either "M" (for mushroom)\n' + \
-        '   or "T" (for tomato).\n'
-
-    game_rules = \
-        '   You can move around the pizza map and increase slices (input structure is below).\n' + \
-        '   The goal is to have maximum score obtaining the maximum amount of ingredients\n' + \
-        '   inside valid slices. A valid slice is a slice which satisfies provided slice constraints\n' + \
-        '   of having at least the specified minimum of each ingredient per slice and having not more\n' + \
-        '   than the maximum of all ingredients per slice.\n' + \
-        '   To increase slice, you need to toggle slice mode from OFF to ON. Then any direction that\n' + \
-        '   you will pass, will be applied to increase the slice at the cursor position.\n' + \
-        '   To disable slice mode, you need to toggle it one more time.\n' + \
-        '   Some actions will not change anything and you will not receive any reward for it.\n'
-
-
     import argparse
     parser = argparse.ArgumentParser(description='Cutting pizza for my friends',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog= '\n' + \
-        ' Game rules:\n' + \
-        game_rules + \
-        ' Expects input as follows:' + \
-        ' - ' + pizza_config_line_description + \
-        '\n' + \
-        ' - ' + pizza_lines_description + \
-        '\n' + \
-        ' For input type one of "right", "down", "left", "up" to move/increase in specific direction \n' + \
-        ' and "toggle" for toggling slice mode. Input will be read line by line.\n' + \
-        ' You can overwrite how you pass the input with parameter --wasd (check its help).\n' + \
-        ' When the slice mode is on, passing directions actions will increase the slice\n' + \
-        ' at the position of the cursor. Otherwise, the cursor will move in the specified\n' + \
-        ' direction.\n' + \
-        '\n' + \
-        ' Before each action there will be a file "<name>/<step_index>_env.json"\n' + \
-        ' containing state, reward, game over and other information. If <name> parameter\n' + \
-        ' was not provided, states will not be saved into files. Initial state\n' + \
-        ' will be inside the file "<name>/ready_pizza_env.json".\n' + \
-        '\n' + \
-        ' The game ends when slices cannot be increased anymore or the game reached\n' + \
-        ' maximum actions.\n' + \
-        '\n' + \
-        ' At the end, there will be a file "<name>/ready_pizza_state.json"\n' + \
-        ' containing the last state in the game with total reward.\n' + \
-        '\n' + \
-        ' File "<name>/ready_pizza_env.json" is the same as the last \n' + \
-        ' "<name>/<step_index>_env.json". It is provided for convinience and to \n' + \
-        ' indicate the end of the game.\n' + \
-        ' Note that the files will be overwritten if exist.\n' + \
-        '\n' + \
-        ' If --output parameter is provided, there will be a file that consists of:\n' + \
-        '   - 1 line containing a single natural number S (0 <= S <= R * C),\n' + \
-        '     representing the total number of slices to be cut.\n' + \
-        '   - S lines describing the slices. Each of these lines contain\n' + \
-        '     the following natural numbers separated by single spaces:\n' + \
-        '     - r1, c1, r2, c2 (0 <= r1,r2 < R,0 <= c1,c2 < C) describe\n' + \
-        '       a slice of pizza delimited by the rows r1 and r2 and\n' + \
-        '       the columns c1 and c2, including the cells of the delimiting\n' + \
-        '       rows and columns.\n')
-        # TODO: info what in the states file
-
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('--name', default=None, help='folder where the states will be saved')
     parser.add_argument('--output', default=None, help='a path where to store final slices')
@@ -320,7 +222,8 @@ if __name__ == '__main__':
     args_dict = args.__dict__
     output = args_dict.get('output')
     wasd = args_dict.get('wasd')
-    quiet = args_dict.get('quiet')
+    # quiet = args_dict.get('quiet')
+    quiet = True
     render = args_dict.get('render')
     name = args_dict.get('name')
     max_steps = args_dict.get('max_steps')
@@ -328,41 +231,16 @@ if __name__ == '__main__':
     game_args = { 'max_steps': max_steps }
     game = Game(game_args)
 
-    if not quiet:
-        print(game.hello)
-        print('\n Game rules:\n')
-        print(game_rules)
-        print()
-
     try:
         # create folder for states
         if name is not None and not os.path.exists(name):
             os.makedirs(name)
-
-        # get pizza config
-        if not quiet:
-            print('Input {}'.format(pizza_config_line_description))
-            print('For example: 3 5 1 6')
-            print()
-            print('Your input:')
 
         config_line = input('')
         print()
         r, c, l, h = [int(n) for n in config_line.split(' ')]
 
         pizza_lines = []
-        if not quiet:
-            print()
-            print('Input:')
-            print(pizza_lines_description)
-            print('For example:')
-            print()
-            print('TTTTT')
-            print('TMMMT')
-            print('TTTTT')
-            print()
-            print('Your input:')
-
         for i in range(r):
             pizza_lines.append(input(''))
 
@@ -412,5 +290,3 @@ if __name__ == '__main__':
                     f.write('{}\n'.format(len(slices)))
                     for slice in slices:
                         f.write('{} {} {} {}\n'.format(*slice))
-
-        if not quiet: print(game.goodbye)

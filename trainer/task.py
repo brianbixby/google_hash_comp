@@ -47,19 +47,28 @@ def main(args):
         pizza_lines = ["TMTMMTT","MMTMTMM", "MTTMTTT", "TMMMTMM", "TTMTTTM", "TMTMTMT"]
         pizza_config = { 'pizza_lines': pizza_lines, 'r': R, 'c': C, 'l': l, 'h': h }
         state = env.init(pizza_config)[0]  #np.zeros(OBSERVATION_DIM) #get only first value of tuple
+        # state['cursor_position'] = np.asarray(state['cursor_position'])
+        print(state)
+        print(preprocess(state))
         while True:
+            # print("state: ", state)
+            # print()
             if args.render: 
                 env.render()
             # sample one action with the given probability distribution
             # 1. Choose an action based on observation
             action = PG.choose_action(state)
-
             # 2. Take action in the environment
             state_, reward, done, info = env.step(ACTIONS[action])
-
+            # print(np.array(state_['cursor_position']))
+            # state_['cursor_position'] = np.array(state_['cursor_position'])
+            # print("state_.cursor_position: ", state_[cursor_position])
+            # print("reward: ", reward)
+            # print("done: ", done)
+            # print("info: ", info)
+            # print()
             # 3. Store transition for training
             PG.store_transition(preprocess(state), action, reward)
-            
             # Save new state
             #state = state_
             if done:
@@ -91,17 +100,29 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('hashcomp trainer')
     parser.add_argument(
+        '--episodes',
+        type=int,
+        default=1)
+    parser.add_argument(
         '--output-dir',
         type=str,
-        default='/tmp/hashcomp_output')
+        default='/Users/brianbixby/hashcomp/tmp/hashcomp_output')
     parser.add_argument(
         '--job-dir',
         type=str,
-        default='/tmp/hashcomp_output')
+        default='/Users/brianbixby/hashcomp/tmp/hashcomp_output')
     parser.add_argument(
-        '--episodes',
+        '--restore',
+        default=False,
+        action='store_true')
+    parser.add_argument(
+        '--render',
+        default=False,
+        action='store_true')
+    parser.add_argument(
+        '--save-checkpoint-steps',
         type=int,
-        default=10000)
+        default=1)
     parser.add_argument(
         '--learning-rate',
         type=float,
@@ -110,18 +131,7 @@ if __name__ == '__main__':
         '--reward-decay',
         type=float,
         default=0.95)
-    parser.add_argument(
-        '--restore',
-        default=False,
-        action='store_true')
-    parser.add_argument(
-        '--save-checkpoint-steps',
-        type=int,
-        default=1)
-    parser.add_argument(
-        '--render',
-        default=True,
-        action='store_true')
+
     # parser.add_argument(
     #     '--laziness',
     #     type=float,

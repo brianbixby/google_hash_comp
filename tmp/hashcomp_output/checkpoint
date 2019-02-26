@@ -1,0 +1,2 @@
+model_checkpoint_path: "/Users/brianbixby/hashcomp/tmp/hashcomp_output/model.ckpt-1"
+all_model_checkpoint_paths: "/Users/brianbixby/hashcomp/tmp/hashcomp_output/model.ckpt-1"

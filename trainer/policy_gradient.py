@@ -26,21 +26,15 @@ class PolicyGradient:
         restore,
         save_checkpoint_steps
     ):
-
+        self.sess = tf.Session()
         self.n_x = n_x
         self.n_y = n_y
         self.lr = learning_rate
         self.gamma = reward_decay
-
         self.output_dir = output_dir
-
         self.episode_observations, self.episode_actions, self.episode_rewards = [], [], []
-
         self.build_network()
-
         self.cost_history = []
-
-        self.sess = tf.Session()
 
         # $ tensorboard --logdir=logs
         # http://0.0.0.0:6006/
@@ -90,7 +84,7 @@ class PolicyGradient:
             Returns: index of action we want to choose
         """
         # Reshape observation to (num_features, 1)
-        print(observation)
+        # print(observation)
         observation = preprocess(observation)
         observation = observation[:, np.newaxis]
         
@@ -125,8 +119,6 @@ class PolicyGradient:
         #     print('hit\n\n\n')
         output_dir = os.path.join(self.output_dir, 'model.ckpt')
         output_dir = self.saver.save(self.sess, output_dir, global_step=self.global_step)
-        print('Model checkpoint saved: {}'.format(output_dir))
-
         return discounted_episode_rewards_norm
 
     def discount_and_norm_rewards(self):
