@@ -1,14 +1,16 @@
 import argparse
 import os
-from trainer import game
+from trainer import game, tools
 from trainer.policy_gradient import PolicyGradient
 import numpy as np
+
 
 rewards = []
 RENDER_REWARD_MIN = 10
 
-R = 6
-C = 7
+BATCH_SIZE = 10 #PERIOD for a new map
+R = 3
+C = 5
 X_DIM = R * C * 2 + 5
 ACTIONS = ["right", "down", "left", "up", "cut_right", "cut_left", "cut_up", "cut_down"]
 
@@ -24,13 +26,13 @@ def preprocess(state_dict):
 	return state.astype(np.float).ravel()
 
 def main(args):
-    print('main')
+    # print('main')
     args_dict = vars(args)
     print('args: {}'.format(args_dict))
 
     PG = PolicyGradient(
-            n_x = X_DIM,
-            n_y = 8,
+            n_x=X_DIM,
+            n_y=8,
             learning_rate=args.learning_rate,
             reward_decay=args.reward_decay,
             output_dir=args.output_dir,
@@ -39,54 +41,59 @@ def main(args):
             save_checkpoint_steps=args.save_checkpoint_steps
             )
 
-    for episode in range(args.episodes):
-        env = game.Game({'max_steps':200})
-        episode_reward = 0
-        h = 5			
-        l = 1
-        pizza_lines = ["TMTMMTT","MMTMTMM", "MTTMTTT", "TMMMTMM", "TTMTTTM", "TMTMTMT"]
-        pizza_config = { 'pizza_lines': pizza_lines, 'r': R, 'c': C, 'l': l, 'h': h }
-        state = env.init(pizza_config)[0]  #np.zeros(OBSERVATION_DIM) #get only first value of tuple
-        while True:
-            if args.render: 
-                env.render()
-            # sample one action with the given probability distribution
-            # 1. Choose an action based on observation
-            action = PG.choose_action(state)
+    for episode in range(args.episodes//BATCH_SIZE):
+        for i in range(BATCH_SIZE):
+            env = game.Game({'max_steps':200})
+            episode_reward = 0
+            h = 6
+            l = 1
+            # h = np.random.randint(1, R * C + 1)
+            # l = np.random.randint(1, h // 2 + 1)
+            # pizza_lines = tools.rand_map(R, C)
+            # pizza_lines = ["TMTMMTT","MMTMTMM", "MTTMTTT", "TMMMTMM", "TTMTTTM", "TMTMTMT"]
+            pizza_lines = ["TTTTT","TMMMT", "TTTTT"]
+            pizza_config = { 'pizza_lines': pizza_lines, 'r': R, 'c': C, 'l': l, 'h': h }
+            state = env.init(pizza_config)[0]  #np.zeros(OBSERVATION_DIM) #get only first value of tuple
+            while True:  # count to 5 non terministic
+                if args.render:
+                    env.render()
+                # sample one action with the given probability distribution
+                # 1. Choose an action based on observation
+                action = PG.choose_action(state)
 
-            # 2. Take action in the environment
-            state_, reward, done, info = env.step(ACTIONS[action])
+                # 2. Take action in the environment
+                state_, reward, done, info = env.step(ACTIONS[action])
 
-            # 3. Store transition for training
-            PG.store_transition(preprocess(state), action, reward)
-            
-            # Save new state
-            #state = state_
-            if done:
-                episode_rewards_sum = sum(PG.episode_rewards)
-                rewards.append(episode_rewards_sum)
-                max_reward_so_far = np.amax(rewards)
+                # 3. Store transition for training
+                PG.store_transition(preprocess(state), action, reward)
 
-                print("==========================================")
-                print("Episode: ", episode)
-                print("Reward: ", episode_rewards_sum)
-                print("Max reward so far: ", max_reward_so_far)
+                # Save new state
+                #state = state_
+                if done:
+                    episode_rewards_sum = sum(PG.episode_rewards)
+                    rewards.append(episode_rewards_sum)
+                    max_reward_so_far = np.amax(rewards)
 
-                # 4. Train neural network
-                discounted_episode_rewards_norm = PG.learn()
+                    print("==========================================")
+                    print("Episode: ", episode)
+                    print("Reward: ", episode_rewards_sum)
+                    print("Max reward so far: ", max_reward_so_far)
 
-                # Render env if we get to rewards minimum
-                if max_reward_so_far > RENDER_REWARD_MIN: #args.render = True
-                    break
-                h = np.random.randint(1, R * C + 1)
-                l = np.random.randint(1, h // 2 + 1)
-                env = game.Game({'max_steps':2000}) # initialize game from game.py
-                pizza_lines = ["TMMMTTT","MMMMTMM", "TTMTTMT", "TMMTMMM", "TTTTTTM", "TTTTTTM"]
-                pizza_config = { 'pizza_lines': pizza_lines, 'r': R, 'c': C, 'l': l, 'h': h }
-            # Save new state
-            state = state_
-        # if args.render: 
-        #     PG.plot_cost()
+                    # 4. Train neural network
+                    discounted_episode_rewards_norm = PG.learn()
+
+                    # Render env if we get to rewards minimum
+                    if max_reward_so_far > RENDER_REWARD_MIN: #args.render = True
+                        break
+                    # h = np.random.randint(1, R * C + 1)
+                    # l = np.random.randint(1, h // 2 + 1)
+                    env = game.Game({'max_steps':2000}) # initialize game from game.py
+                    # pizza_lines = ["TMMMTTT","MMMMTMM", "TTMTTMT", "TMMTMMM", "TTTTTTM", "TTTTTTM"]
+                    # pizza_config = { 'pizza_lines': pizza_lines, 'r': R, 'c': C, 'l': l, 'h': h }
+                # Save new state
+                state = state_
+            # if args.render:
+            #     PG.plot_cost()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('hashcomp trainer')
@@ -101,7 +108,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--episodes',
         type=int,
-        default=10000)
+        default=10)
     parser.add_argument(
         '--learning-rate',
         type=float,

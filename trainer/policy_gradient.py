@@ -81,7 +81,6 @@ class PolicyGradient:
         action[a] = 1
         self.episode_actions.append(action)
 
-
     def choose_action(self, observation):
         """
             Choose action based on observation
@@ -96,7 +95,7 @@ class PolicyGradient:
         
         #observation = tf.convert_to_tensor(observation, dtype=tf.float32)
         # Run forward propagation to get softmax probabilities
-        prob_weights = self.sess.run(self.outputs_softmax, feed_dict = {self.X: observation})
+        prob_weights = self.sess.run(self.outputs_softmax, feed_dict={self.X: observation})
 
         # Select action using a biased sample
         # this will return the index of the action we've sampled
@@ -144,7 +143,6 @@ class PolicyGradient:
         discounted_episode_rewards -= np.mean(discounted_episode_rewards)
         discounted_episode_rewards /= np.std(discounted_episode_rewards)
         return discounted_episode_rewards
-
 
     def build_network(self):
         # Create placeholders

@@ -229,10 +229,10 @@ class Game:
 
 
     def render(self):
-        print(self.hello)
+        # print(self.hello)
         self.render_information()
         self.serve_pizza.print_from(self.env)
-        print(self.legend)
+        # print(self.legend)
 
 
 
